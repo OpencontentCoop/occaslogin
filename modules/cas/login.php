@@ -13,7 +13,7 @@ try {
     if ($client->needValidation()) {
         $userData = $client->validateRequestAndGetUserData();
         $handler = new CasUserHandler($userData);
-        $handler->loginAndRedirect($Module);
+        $handler->loginAndRedirect();
     } else {
         $redirectUrl = $client->getLoginUrl();
         $Module->RedirectURI = $redirectUrl;

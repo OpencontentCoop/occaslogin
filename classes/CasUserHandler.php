@@ -128,11 +128,12 @@ class CasUserHandler
         throw new Exception("Error creating user", 1);
     }
 
-    public function loginAndRedirect(eZModule $module)
+    public function loginAndRedirect()
     {
         $user = $this->login();
         $ini = eZINI::instance();
-        $redirectionURI = $ini->variable('SiteSettings', 'DefaultPage');
+        $redirectionURI = '/';
+
         if (is_object($user)) {
             // First, let's determine which attributes we should search redirection URI in.
             $userUriAttrName = '';
@@ -198,8 +199,11 @@ class CasUserHandler
                 }
             }
         }
-        $module->redirectTo($redirectionURI);
-        return true;
+
+        $http = eZHTTPTool::instance();
+        eZURI::transformURI($redirectionURI);
+        $http->redirect($redirectionURI);
+        eZExecution::cleanExit();
     }
 
     private function getExistingUser()
@@ -207,9 +211,6 @@ class CasUserHandler
         $user = eZUser::fetchByName($this->login);
         if (!$user instanceof eZUser) {
             $user = $this->getUserByFiscalCode();
-        }
-        if (!$user instanceof eZUser) {
-            $user = eZUser::fetchByEmail($this->email);
         }
 
         return $user;

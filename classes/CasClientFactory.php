@@ -32,6 +32,7 @@ class CasClientFactory
             if ($settings['EnableCasLogin'] !== 'enabled') {
                 throw new InvalidArgumentException('Cas login is disabled by configuration');
             }
+            $enableMock = isset($settings['EnableMockTokens']) && $settings['EnableMockTokens'] == 'enabled';
             $service = $settings['Service'];
             if (empty($service)){
                 $service = 'https://' . eZINI::instance()->variable('SiteSettings', 'SiteURL');

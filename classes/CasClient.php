@@ -23,27 +23,30 @@ class CasClient
      */
     private $service;
 
-    private $http;
+    private $httpTool;
 
-    public function __construct(HttpClientInterface $httpClient, $baseUrl, $service)
+    private $enableMock;
+
+    public function __construct(HttpClientInterface $httpClient, $baseUrl, $service, $enableMock = false)
     {
         $this->httpClient = $httpClient;
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->service = $service;
-        $this->http = eZHTTPTool::instance();
+        $this->httpTool = eZHTTPTool::instance();
+        $this->enableMock = $enableMock;
     }
 
     public function needValidation()
     {
-        return $this->http->hasGetVariable(self::QUERY_TICKET_PARAMETER);
+        return $this->httpTool->hasGetVariable(self::QUERY_TICKET_PARAMETER);
     }
 
     public function validateRequestAndGetUserData()
     {
-        $ticket = $this->http->getVariable(self::QUERY_TICKET_PARAMETER);
-        if ($ticket === 'test-success') {
+        $ticket = $this->httpTool->getVariable(self::QUERY_TICKET_PARAMETER);
+        if ($ticket === 'test-success' && $this->enableMock) {
             $data = $this->getMockSuccessValidationResponse();
-        } elseif ($ticket === 'test-fail') {
+        } elseif ($ticket === 'test-fail' && $this->enableMock) {
             $data = $this->getMockFailValidationResponse();
         } else {
             $validationUrl = $this->baseUrl . '/cas/serviceValidate';
@@ -85,8 +88,7 @@ class CasClient
             <cas:identificativoUtente>spidcode</cas:identificativoUtente>
             <cas:isFromNewLogin>true</cas:isFromNewLogin>
             <cas:authenticationDate>2022-01-25T09:09:07.500837Z</cas:authenticationDate>
-            <cas:cognome>Cas</cas:cognome>
-            <cas:emailAddress>cas@example.it</cas:emailAddress>
+            <cas:cognome>Poste41</cas:cognome>
             <cas:clientName>BresciaGOV_SPID</cas:clientName>
             <cas:authenticationMethod>DelegatedClientAuthenticationHandler</cas:authenticationMethod>
             <cas:successfulAuthenticationHandlers>DelegatedClientAuthenticationHandler</cas:successfulAuthenticationHandlers>
