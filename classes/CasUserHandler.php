@@ -26,6 +26,10 @@ class CasUserHandler
         $this->login = $userData[$mapper['UserLogin']];
         $this->email = $userData[$mapper['UserEmail']];
 
+        if (empty($this->login)){
+            throw new Exception('Attribute ' . $mapper['UserLogin'] . ' not found or empty');
+        }
+
         foreach ($mapper['Attributes'] as $key => $map) {
             if (isset($userData[$map])) {
                 $this->attributes[$key] = $userData[$map];
