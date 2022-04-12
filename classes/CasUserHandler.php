@@ -26,10 +26,6 @@ class CasUserHandler
         $this->login = $userData[$mapper['UserLogin']];
         $this->email = $userData[$mapper['UserEmail']];
 
-        if (empty($this->login)){
-            throw new Exception('Attribute ' . $mapper['UserLogin'] . ' not found or empty');
-        }
-
         foreach ($mapper['Attributes'] as $key => $map) {
             if (isset($userData[$map])) {
                 $this->attributes[$key] = $userData[$map];
@@ -134,71 +130,74 @@ class CasUserHandler
 
     public function loginAndRedirect()
     {
-        $user = $this->login();
-        $ini = eZINI::instance();
         $redirectionURI = '/';
+        if (empty($this->login)) {
+            CasLogger::log('error', 'Missing login attribute in cas user data', __METHOD__);
+        } else {
+            $user = $this->login();
+            $ini = eZINI::instance();
+            if (is_object($user)) {
+                // First, let's determine which attributes we should search redirection URI in.
+                $userUriAttrName = '';
+                $groupUriAttrName = '';
+                if ($ini->hasVariable('UserSettings', 'LoginRedirectionUriAttribute')) {
+                    $uriAttrNames = $ini->variable('UserSettings', 'LoginRedirectionUriAttribute');
+                    if (is_array($uriAttrNames)) {
+                        if (isset($uriAttrNames['user'])) {
+                            $userUriAttrName = $uriAttrNames['user'];
+                        }
 
-        if (is_object($user)) {
-            // First, let's determine which attributes we should search redirection URI in.
-            $userUriAttrName = '';
-            $groupUriAttrName = '';
-            if ($ini->hasVariable('UserSettings', 'LoginRedirectionUriAttribute')) {
-                $uriAttrNames = $ini->variable('UserSettings', 'LoginRedirectionUriAttribute');
-                if (is_array($uriAttrNames)) {
-                    if (isset($uriAttrNames['user'])) {
-                        $userUriAttrName = $uriAttrNames['user'];
-                    }
-
-                    if (isset($uriAttrNames['group'])) {
-                        $groupUriAttrName = $uriAttrNames['group'];
+                        if (isset($uriAttrNames['group'])) {
+                            $groupUriAttrName = $uriAttrNames['group'];
+                        }
                     }
                 }
-            }
 
-            $userObject = $user->attribute('contentobject');
+                $userObject = $user->attribute('contentobject');
 
-            // 1. Check if redirection URI is specified for the user
-            $userUriSpecified = false;
-            if ($userUriAttrName) {
-                /** @var eZContentObjectAttribute[] $userDataMap */
-                $userDataMap = $userObject->attribute('data_map');
-                if (isset($userDataMap[$userUriAttrName])
-                    && ($uriAttribute = $userDataMap[$userUriAttrName])
-                    && ($uri = $uriAttribute->attribute('content'))) {
-                    $redirectionURI = $uri;
-                    $userUriSpecified = true;
+                // 1. Check if redirection URI is specified for the user
+                $userUriSpecified = false;
+                if ($userUriAttrName) {
+                    /** @var eZContentObjectAttribute[] $userDataMap */
+                    $userDataMap = $userObject->attribute('data_map');
+                    if (isset($userDataMap[$userUriAttrName])
+                        && ($uriAttribute = $userDataMap[$userUriAttrName])
+                        && ($uri = $uriAttribute->attribute('content'))) {
+                        $redirectionURI = $uri;
+                        $userUriSpecified = true;
+                    }
                 }
-            }
 
-            // 2.Check if redirection URI is specified for at least one of the user's groups (preferring main parent group).
-            if (!$userUriSpecified && $groupUriAttrName && $user->hasAttribute('groups')) {
-                $groups = $user->attribute('groups');
+                // 2.Check if redirection URI is specified for at least one of the user's groups (preferring main parent group).
+                if (!$userUriSpecified && $groupUriAttrName && $user->hasAttribute('groups')) {
+                    $groups = $user->attribute('groups');
 
-                if (isset($groups) && is_array($groups)) {
-                    $chosenGroupURI = '';
-                    foreach ($groups as $groupID) {
-                        $group = eZContentObject::fetch($groupID);
-                        /** @var eZContentObjectAttribute[] $groupDataMap */
-                        $groupDataMap = $group->attribute('data_map');
-                        $isMainParent = ($group->attribute('main_node_id') == $userObject->attribute(
-                                'main_parent_node_id'
-                            ));
-                        if (isset($groupDataMap[$groupUriAttrName])) {
-                            $uri = $groupDataMap[$groupUriAttrName]->attribute('content');
-                            if ($uri) {
-                                if ($isMainParent) {
-                                    $chosenGroupURI = $uri;
-                                    break;
-                                } elseif (!$chosenGroupURI) {
-                                    $chosenGroupURI = $uri;
+                    if (isset($groups) && is_array($groups)) {
+                        $chosenGroupURI = '';
+                        foreach ($groups as $groupID) {
+                            $group = eZContentObject::fetch($groupID);
+                            /** @var eZContentObjectAttribute[] $groupDataMap */
+                            $groupDataMap = $group->attribute('data_map');
+                            $isMainParent = ($group->attribute('main_node_id') == $userObject->attribute(
+                                    'main_parent_node_id'
+                                ));
+                            if (isset($groupDataMap[$groupUriAttrName])) {
+                                $uri = $groupDataMap[$groupUriAttrName]->attribute('content');
+                                if ($uri) {
+                                    if ($isMainParent) {
+                                        $chosenGroupURI = $uri;
+                                        break;
+                                    } elseif (!$chosenGroupURI) {
+                                        $chosenGroupURI = $uri;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // if we've chose an URI from one of the user's groups.
-                    if ($chosenGroupURI) {
-                        $redirectionURI = $chosenGroupURI;
+                        // if we've chose an URI from one of the user's groups.
+                        if ($chosenGroupURI) {
+                            $redirectionURI = $chosenGroupURI;
+                        }
                     }
                 }
             }
