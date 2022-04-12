@@ -46,6 +46,8 @@ class CasClient
         $ticket = $this->httpTool->getVariable(self::QUERY_TICKET_PARAMETER);
         if ($ticket === 'test-success' && $this->enableMock) {
             $data = $this->getMockSuccessValidationResponse();
+        } elseif ($ticket === 'test-simple-success' && $this->enableMock) {
+            $data = $this->getMockSimpleSuccessValidationResponse();
         } elseif ($ticket === 'test-fail' && $this->enableMock) {
             $data = $this->getMockFailValidationResponse();
         } else {
@@ -60,7 +62,12 @@ class CasClient
         }
         $xml = new \SimpleXMLElement($data, 0, false, 'cas', true);
         if (isset($xml->authenticationSuccess)) {
-            return (array)$xml->authenticationSuccess->attributes;
+            $attributes = (array)$xml->authenticationSuccess->attributes;
+            if (!isset($attributes['codiceFiscale']) || empty($attributes['codiceFiscale'])){
+                $attributes['codiceFiscale'] = (string)$xml->authenticationSuccess->user;
+            }
+
+            return $attributes;
         }
 
         CasLogger::error("[authentication-failed] $data", __METHOD__);
@@ -75,6 +82,27 @@ class CasClient
     public function getLogoutUrl()
     {
         return $this->baseUrl . '/cas/logout?' . self::QUERY_SERVICE_PARAMETER . '=' . $this->service;
+    }
+
+    private function getMockSimpleSuccessValidationResponse()
+    {
+        return "
+        <cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
+          <cas:authenticationSuccess>
+            <cas:user>NTSCTT80E59D086L</cas:user>
+            <cas:attributes>
+              <cas:credentialType>ClientCredential</cas:credentialType>
+              <cas:isFromNewLogin>true</cas:isFromNewLogin>
+              <cas:authenticationDate>2022-04-12T17:41:50.791782Z</cas:authenticationDate>
+              <cas:clientName>BresciaGOV_SPID</cas:clientName>
+              <cas:authenticationMethod>DelegatedClientAuthenticationHandler</cas:authenticationMethod>
+              <cas:successfulAuthenticationHandlers>DelegatedClientAuthenticationHandler
+              </cas:successfulAuthenticationHandlers>
+              <cas:longTermAuthenticationRequestTokenUsed>false</cas:longTermAuthenticationRequestTokenUsed>
+            </cas:attributes>
+          </cas:authenticationSuccess>
+        </cas:serviceResponse>
+      ";
     }
 
     private function getMockSuccessValidationResponse()
