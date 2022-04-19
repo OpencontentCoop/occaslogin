@@ -103,6 +103,10 @@ class CasUserHandler
 
         CasLogger::log('debug', 'Auth user does not exist: create user', __METHOD__);
 
+        if (empty($this->email)){
+            $this->email = 'missing-mail-for-' . $this->login;
+        }
+
         $hash = eZUser::passwordHashTypeName(eZUser::hashType());
         $this->attributes[$this->accountAttributeIdentifier] = $this->login . '|' . $this->email . '||' . $hash . '|1';
         $params = [];
