@@ -21,7 +21,17 @@ class CasUserHandler
 
     public function __construct($userData)
     {
+        $settings = eZINI::instance('caslogin.ini')->group('Settings');
+        $clientClassName = 'CasClient';
+        if (isset($settings['ClientClassName'])){
+            $clientClassName = $settings['ClientClassName'];
+        }
+
         $mapper = eZINI::instance('caslogin.ini')->group('AttributeMapper');
+        if (eZINI::instance('caslogin.ini')->group('AttributeMapper_' . $clientClassName)){
+            $mapper = eZINI::instance('caslogin.ini')->group('AttributeMapper_' . $clientClassName);
+        }
+
         $this->fiscalCode = $userData[$mapper['FiscalCode']];
         $this->login = $userData[$mapper['UserLogin']];
         $this->email = $userData[$mapper['UserEmail']];

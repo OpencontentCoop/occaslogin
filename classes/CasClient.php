@@ -2,7 +2,7 @@
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class CasClient
+class CasClient implements CasClientInterface
 {
     const QUERY_TICKET_PARAMETER = 'ticket';
 

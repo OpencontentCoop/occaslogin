@@ -22,7 +22,7 @@ class CasClientFactory
     }
 
     /**
-     * @return CasClient
+     * @return CasClientInterface
      */
     public function makeClient()
     {
@@ -37,11 +37,18 @@ class CasClientFactory
             if (empty($service)){
                 $service = 'https://' . eZINI::instance()->variable('SiteSettings', 'SiteURL');
             }
-            $this->client = new CasClient(
+            $clientClassName = 'CasClient';
+            if (isset($settings['ClientClassName'])){
+                $clientClassName = $settings['ClientClassName'];
+            }
+            $this->client = new $clientClassName(
                 $client,
                 $settings['BaseUrl'],
                 $service
             );
+            if (!$this->client instanceof CasClientInterface){
+                throw new InvalidArgumentException('Cas client must implements CasClientInterface');
+            }
         }
 
         return $this->client;
