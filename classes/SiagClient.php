@@ -47,7 +47,7 @@ class SiagClient implements CasClientInterface
             $profileUrl = $this->baseUrl . '/api/Auth/Profile/' . $token;
             $profileResponse = $this->httpClient->request('GET', $profileUrl, [
                 'query' => [
-                    'onlyAuth' => true,
+                    'onlyAuth' => 'true',
                 ],
             ]);
             $data = (string)$profileResponse->getContent();
@@ -64,11 +64,11 @@ class SiagClient implements CasClientInterface
     public function getLoginUrl()
     {
         // TODO: Implement getLoginUrl() method.
-        return "{$this->baseUrl}}/api/Auth/Login?targetUrl={$this->service}&acceptedAuthTypes=SPID%20CNS&onlyAuth=true&lang={$this->language}";
+        return "{$this->baseUrl}/api/Auth/Login?targetUrl={$this->service}&acceptedAuthTypes=SPID%20CNS&onlyAuth=true&lang={$this->language}";
     }
 
     public function getLogoutUrl()
     {
-        return "{$this->baseUrl}}/api/Auth/Logout?returnUrl={$this->service}";
+        return "{$this->baseUrl}/api/Auth/Logout?returnUrl={$this->service}";
     }
 }
