@@ -229,6 +229,11 @@ class CasUserHandler
         if (!$user instanceof eZUser) {
             $user = $this->getUserByFiscalCode();
         }
+        if (eZINI::instance('caslogin.ini')->variable('Settings', 'FindExistingUserByMail') === 'enabled') {
+            if (!$user instanceof eZUser) {
+                $user = eZUser::fetchByEmail($this->email);
+            }
+        }
 
         return $user;
     }
